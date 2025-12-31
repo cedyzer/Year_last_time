@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>2025 | Bestie Edition</title>
+    <style>
+        :root {
+            --accent: #00f2fe;
+            --secondary: #4facfe;
+            --bg: #0b0d17;
+            --card-bg: rgba(20, 24, 40, 0.8);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+
+        body {
+            background-color: var(--bg);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(79, 172, 254, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(0, 242, 254, 0.15) 0px, transparent 50%);
+            height: 100vh;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 420px;
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 28px;
+            padding: 35px 25px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            position: relative;
+            z-index: 10;
+        }
+
+        .screen { display: none; animation: fadeIn 0.5s ease forwards; }
+        .active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 { font-size: 2rem; margin-bottom: 15px; letter-spacing: -1px; }
+        p { color: #a0a0ba; line-height: 1.6; margin-bottom: 25px; font-size: 1rem; }
+
+        .btn {
+            background: linear-gradient(135deg, var(--secondary), var(--accent));
+            color: #000;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            transition: 0.3s;
+            font-size: 1rem;
+        }
+
+        .btn:active { transform: scale(0.98); }
+
+        /* Scratch Card Styling */
+        .scratch-outer {
+            position: relative;
+            width: 280px;
+            height: 350px;
+            margin: 0 auto 20px;
+            border-radius: 20px;
+            overflow: hidden;
+            background: #1a1a2e;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        #scratch-canvas {
+            position: absolute;
+            top: 0; left: 0; z-index: 5;
+            cursor: crosshair;
+            touch-action: none;
+        }
+
+        .hidden-img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            pointer-events: none;
+        }
+
+        .emotion-text {
+            min-height: 60px;
+            color: var(--accent);
+            font-style: italic;
+            font-size: 0.95rem;
+            margin: 15px 0;
+            padding: 0 10px;
+        }
+
+        .counter { color: #5c5c70; font-size: 0.8rem; margin-top: 10px; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+
+    <div id="scr-1" class="container screen active">
+        <h1>Hey Bestie! ✨</h1>
+        <p>2024 was a journey, and I'm so glad we walked it together. I've put our best moments behind these cards.</p>
+        <button class="btn" onclick="goToScreen(2)">Unlock Memories</button>
+    </div>
+
+    <div id="scr-2" class="container screen">
+        <h2 id="mem-title" style="margin-bottom:15px;">Memory 1</h2>
+        <div class="scratch-outer">
+            <img src="" id="photo-reveal" class="hidden-img">
+            <canvas id="scratch-canvas"></canvas>
+        </div>
+        <div id="msg-reveal" class="emotion-text">Scratch the silver to reveal...</div>
+        <div id="progress" class="counter">1 OF 6</div>
+        <button id="next-btn" class="btn" style="display:none; margin-top:15px;" onclick="handleNext()">Next Memory →</button>
+    </div>
+
+    <div id="scr-3" class="container screen">
+        <h1>Happy 2025! 🥂</h1>
+        <p>To many more late-night chats, bad jokes, and great memories. Thanks for being the best friend anyone could ask for.</p>
+        <p style="color: var(--accent); font-weight: bold;">Let's kill it this year!</p>
+        <button class="btn" style="margin-top:20px" onclick="location.reload()">View Again</button>
+    </div>
+
+    <script>
+        const memories = [
+            { img: "https://picsum.photos/400/500?random=11", txt: "You're the person I can always count on. No matter what. 🤜🤛" },
+            { img: "https://picsum.photos/400/500?random=12", txt: "Thanks for listening to my endless rants this year! 🗣️✨" },
+            { img: "https://picsum.photos/400/500?random=13", txt: "The best memories are the ones we didn't plan. 📸" },
+            { img: "https://picsum.photos/400/500?random=14", txt: "Stay awesome, stay you. 2025 isn't ready for us! 🚀" },
+            { img: "https://picsum.photos/400/500?random=15", txt: "Glad to have a bestie who is just as crazy as me. 😂" },
+            { img: "https://picsum.photos/400/500?random=16", txt: "Here's to another year of legendary friendship! 🥂" }
+        ];
+
+        let index = 0;
+        let isScratched = false;
+        const canvas = document.getElementById('scratch-canvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+        function goToScreen(num) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('scr-' + num).classList.add('active');
+            if(num === 2) {
+                // Delay allows the CSS layout to "settle" so canvas size is correct
+                setTimeout(setupScratch, 100);
+            }
+        }
+
+        function setupScratch() {
+            const data = memories[index];
+            document.getElementById('photo-reveal').src = data.img;
+            document.getElementById('mem-title').innerText = `Memory ${index + 1}`;
+            document.getElementById('msg-reveal').innerText = "Scratch the silver to reveal...";
+            document.getElementById('progress').innerText = `${index + 1} OF ${memories.length}`;
+            document.getElementById('next-btn').style.display = 'none';
+            isScratched = false;
+
+            canvas.width = 280;
+            canvas.height = 350;
+
+            // Draw the scratch-off layer
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.fillStyle = '#c0c0c0'; // Silver
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Add some "dust" texture
+            ctx.fillStyle = '#999';
+            for(let i=0; i<400; i++) {
+                ctx.fillRect(Math.random()*280, Math.random()*350, 1, 1);
+            }
+        }
+
+        function handleScratch(e) {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const pt = e.touches ? e.touches[0] : e;
+            const x = (pt.clientX - rect.left) * (canvas.width / rect.width);
+            const y = (pt.clientY - rect.top) * (canvas.height / rect.height);
+
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.beginPath();
+            ctx.arc(x, y, 35, 0, Math.PI * 2);
+            ctx.fill();
+
+            if(!isScratched) {
+                isScratched = true;
+                document.getElementById('msg-reveal').innerText = memories[index].txt;
+                document.getElementById('next-btn').style.display = 'block';
+            }
+        }
+
+        function handleNext() {
+            index++;
+            if(index < memories.length) {
+                setupScratch();
+            } else {
+                goToScreen(3);
+            }
+        }
+
+        // Event Listeners
+        canvas.addEventListener('mousemove', (e) => { if(e.buttons === 1) handleScratch(e); });
+        canvas.addEventListener('mousedown', handleScratch);
+        canvas.addEventListener('touchmove', handleScratch, { passive: false });
+        canvas.addEventListener('touchstart', handleScratch, { passive: false });
+
+    </script>
+</body>
+</html>
